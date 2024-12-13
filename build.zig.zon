@@ -1,0 +1,16 @@
+.{
+    .name = .OpenXR_SDK,
+    .version = "1.1.47",
+    .fingerprint = 0x159be5dc6f904f47,
+    .dependencies = .{
+        .@"openxr-source" = .{
+            .url = "https://github.com/KhronosGroup/OpenXR-SDK-Source/archive/refs/tags/release-1.1.47.zip",
+            .hash = "N-V-__8AAEVHIQFaOS-WQftl0lWyUrOdx3iCxh8DLWAvQ1bJ",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

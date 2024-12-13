@@ -1,3 +1,14 @@
+# mod
+
+use build.zig
+
+`0.14.0`
+
+```sh
+> zig build
+> ./zig-out/bin/hello_xr.exe
+```
+
 # OpenXR™ Software Development Kit (SDK) Project
 
 <!--
@@ -25,6 +36,7 @@ That repository is also where sample code (hello_xr) and API layer source can be
 ## Directory Structure
 
 <!-- REUSE-IgnoreStart -->
+
 - `BUILDING.md` - Instructions for building the projects
 - `README.md` - This file
 - `COPYING.md` - Copyright and licensing information

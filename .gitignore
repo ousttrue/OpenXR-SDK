@@ -91,3 +91,8 @@ clang-format-patches/
 
 # Key stores
 *.jks
+
+zig-out
+zig-cache
+.zig-cache
+Makefile
