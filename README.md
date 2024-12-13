@@ -1,3 +1,14 @@
+# mod
+
+use build.zig
+
+`0.14.0-dev.2435+7575f2121`
+
+```sh
+> zig build
+> ./zig-out/bin/hello_xr.exe
+```
+
 # OpenXR™ Software Development Kit (SDK) Project
 
 <!--
@@ -25,6 +36,7 @@ That repository is also where sample code (hello_xr) and API layer source can be
 ## Directory Structure
 
 <!-- REUSE-IgnoreStart -->
+
 - `BUILDING.md` - Instructions for building the projects
 - `README.md` - This file
 - `COPYING.md` - Copyright and licensing information
@@ -48,16 +60,16 @@ e.g. by adding `-DDYNAMIC_LOADER=ON` or `-DDYNAMIC_LOADER=OFF` to your CMake com
 ### Windows
 
 Building the OpenXR components in this tree on Windows is supported using
-Visual Studio 2013 and newer.  Before beginning, make sure the appropriate
-"msbuild.exe" is in your PATH.  Also, when generating the solutions/projects
-using CMake, be sure to use the correct compiler version number.  The
+Visual Studio 2013 and newer. Before beginning, make sure the appropriate
+"msbuild.exe" is in your PATH. Also, when generating the solutions/projects
+using CMake, be sure to use the correct compiler version number. The
 following table is provided to help you:
 
-| Visual Studio        | Version Number |
-| -------------------- |:--------------:|
-| Visual Studio 2013   |       12       |
-| Visual Studio 2015   |       14       |
-| Visual Studio 2017   |       15       |
+| Visual Studio      | Version Number |
+| ------------------ | :------------: |
+| Visual Studio 2013 |       12       |
+| Visual Studio 2015 |       14       |
+| Visual Studio 2017 |       15       |
 
 Specific sample command lines for building follow.
 If you're already familiar with the process of building a project with
