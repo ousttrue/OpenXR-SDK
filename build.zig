@@ -5,12 +5,25 @@ pub fn build(b: *std.Build) void {
     const exe_name: []const u8 = "hello_xr";
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const openxr_src_dep = b.dependency("openxr-source", .{});
 
     if (target.result.abi.isAndroid()) {
         // zig build -Dtarget=x86_64-linux-android
-        build_android(b, exe_name, target, optimize);
+        build_android(
+            b,
+            exe_name,
+            target,
+            optimize,
+            openxr_src_dep,
+        );
     } else {
-        build_pc(b, exe_name, target, optimize);
+        build_pc(
+            b,
+            exe_name,
+            target,
+            optimize,
+            openxr_src_dep,
+        );
     }
 }
 
@@ -19,6 +32,7 @@ fn build_android(
     exe_name: []const u8,
     root_target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
+    openxr_src_dep: *std.Build.Dependency,
 ) void {
     const android_targets = android.standardTargets(b, root_target);
 
@@ -27,6 +41,8 @@ fn build_android(
         root_target_single[0..]
     else
         android_targets;
+
+    const src_root = b.path("minimal");
 
     // If building with Android, initialize the tools / build
     const android_apk: ?*android.APK = blk: {
@@ -42,11 +58,11 @@ fn build_android(
 
         const key_store_file = android_tools.createKeyStore(android.CreateKey.example());
         apk.setKeyStore(key_store_file);
-        apk.setAndroidManifest(b.path("android/AndroidManifest.xml"));
-        apk.addResourceDirectory(b.path("android/res"));
+        apk.setAndroidManifest(src_root.path(b, "android/AndroidManifest.xml"));
+        apk.addResourceDirectory(src_root.path(b, "android/res"));
 
         // Add Java files
-        apk.addJavaSourceFile(.{ .file = b.path("android/src/NativeInvocationHandler.java") });
+        apk.addJavaSourceFile(.{ .file = src_root.path(b, "android/src/NativeInvocationHandler.java") });
         break :blk apk;
     };
 
@@ -54,40 +70,47 @@ fn build_android(
         const app_module = b.createModule(.{
             .target = target,
             .optimize = optimize,
-            .root_source_file = b.path("src/minimal.zig"),
+            // .root_source_file = src_root.path(b, "src/minimal.zig"),
         });
 
-        var exe: *std.Build.Step.Compile = if (target.result.abi.isAndroid()) b.addLibrary(.{
+        var exe: *std.Build.Step.Compile = b.addLibrary(.{
             .name = exe_name,
             .root_module = app_module,
             .linkage = .dynamic,
-        }) else b.addExecutable(.{
-            .name = exe_name,
-            .root_module = app_module,
         });
 
         // if building as library for Android, add this target
         // NOTE: Android has different CPU targets so you need to build a version of your
         //       code for x86, x86_64, arm, arm64 and more
-        if (target.result.abi.isAndroid()) {
-            const apk: *android.APK = android_apk orelse @panic("Android APK should be initialized");
-            const android_dep = b.dependency("android", .{
-                .optimize = optimize,
-                .target = target,
-            });
-            exe.root_module.addImport("android", android_dep.module("android"));
 
-            apk.addArtifact(exe);
-        } else {
-            b.installArtifact(exe);
+        const apk: *android.APK = android_apk orelse @panic("Android APK should be initialized");
+        const android_dep = b.dependency("android", .{
+            .optimize = optimize,
+            .target = target,
+        });
+        exe.root_module.addImport("android", android_dep.module("android"));
+        // exe.addSystemIncludePath(.{ .cwd_relative = apk.tools.include_path });
+        // exe.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/c++/v1", .{apk.tools.include_path}) });
 
-            // If only 1 target, add "run" step
-            if (targets.len == 1) {
-                const run_step = b.step("run", "Run the application");
-                const run_cmd = b.addRunArtifact(exe);
-                run_step.dependOn(&run_cmd.step);
-            }
-        }
+        exe.addCSourceFiles(.{
+            .root = openxr_src_dep.path("src"),
+            .files = &.{
+                "tests/hello_xr/main.cpp",
+                // "tests/hello_xr/platformplugin_factory.cpp",
+                // "tests/hello_xr/platformplugin_win32.cpp",
+                // "tests/hello_xr/graphicsplugin_factory.cpp",
+                // "tests/hello_xr/graphicsplugin_opengl.cpp",
+                // "tests/hello_xr/openxr_program.cpp",
+                // "tests/hello_xr/logger.cpp",
+                // "common/gfxwrapper_opengl.c",
+            },
+            .flags = &.{
+                "-DXR_USE_PLATFORM_ANDROID",
+                // "-DXR_USE_GRAPHICS_API_OPENGL",
+            },
+        });
+
+        apk.addArtifact(exe);
     }
     if (android_apk) |apk| {
         apk.installApk();
@@ -99,6 +122,7 @@ fn build_pc(
     exe_name: []const u8,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
+    openxr_src_dep: *std.Build.Dependency,
 ) void {
     const lib = b.addStaticLibrary(.{
         .name = "OpenXR-SDK",
@@ -144,7 +168,6 @@ fn build_pc(
     lib.addIncludePath(b.path("src"));
     lib.addIncludePath(b.path("src/external/jsoncpp/include"));
 
-    const openxr_src_dep = b.dependency("openxr-source", .{});
     const exe = b.addExecutable(.{
         .name = exe_name,
         .target = target,
